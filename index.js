@@ -258,6 +258,11 @@ if (settings.remediate && settings.remediate.length) {
         console.error('ERROR: Config file does not contain any valid credential configs for remediation.');
         process.exit(1);
     }
+
 }
+// Load custom plugins parameters
+Object.keys(config.settings).forEach(function(key) {
+    settings[key] = config.settings[key];
+});
 // Now execute the scans using the defined configuration information.
 engine(cloudConfig, settings);
