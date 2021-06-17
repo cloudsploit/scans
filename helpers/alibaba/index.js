@@ -8,7 +8,8 @@ var regions = function() {
 
 var helpers = {
     regions: regions,
-    MAX_REGIONS_AT_A_TIME: 6
+    MAX_REGIONS_AT_A_TIME: 6,
+    ENCRYPTION_LEVELS: ['none', 'sse', 'cloudkms', 'alibabacmk', 'externalcmk', 'cloudhsm']
 };
 
 for (var s in shared) helpers[s] = shared[s];

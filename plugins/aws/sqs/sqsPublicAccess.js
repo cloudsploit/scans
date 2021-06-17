@@ -9,11 +9,28 @@ module.exports = {
     recommended_action: 'Update the SQS queue policy to prevent public access.',
     link: 'http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-creating-custom-policies.html',
     apis: ['SQS:listQueues', 'SQS:getQueueAttributes', 'STS:getCallerIdentity'],
+    settings: {
+        sqs_queue_policy_condition_keys: {
+            name: 'SQS Queue Policy Allowed Condition Keys',
+            description: 'Comma separated list of AWS IAM condition keys that should be allowed i.e. aws:SourceAccount.' +
+                'This setting assumes following rules:' +
+                '1. As a best practice, "Deny" with "StringNotLike" and "Allow" with "StringLike" are used to prevent accidental privileged access' +
+                '2. IAM condition keys which work with "Numeric" or "Date" operators are not used' +
+                '3. Bool values are set to "true" with "Allow" and "false" with "Deny"',
+            regex: '^.*$',
+            default: 'aws:PrincipalArn,aws:PrincipalAccount,aws:PrincipalOrgID,aws:SourceAccount,aws:SourceArn'
+        },
+    },
 
     run: function(cache, settings, callback) {
         var results = [];
         var source = {};
         var regions = helpers.regions(settings);
+
+        var config = {
+            sqs_queue_policy_condition_keys: settings.sqs_queue_policy_condition_keys || this.settings.sqs_queue_policy_condition_keys.default
+        };
+        var allowedConditionKeys = config.sqs_queue_policy_condition_keys.split(',');
 
         var acctRegion = helpers.defaultRegion(settings);
         var accountId = helpers.addSource(cache, source,
@@ -65,9 +82,8 @@ module.exports = {
                 var statements = helpers.normalizePolicyDocument(getQueueAttributes.data.Attributes.Policy);
 
                 var publicStatements = [];
-                for (var s in statements) {
-                    var statement = statements[s];
-
+                for (var statement of statements) {
+                    if (statement.Condition && helpers.isValidCondition(statement, allowedConditionKeys, helpers.IAM_CONDITION_OPERATORS, false, accountId)) continue;
                     if (statement.Effect &&
                         statement.Effect === 'Allow' &&
                         helpers.globalPrincipal(statement.Principal)) {

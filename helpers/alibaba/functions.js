@@ -85,8 +85,23 @@ function findOpenPorts(cache, groups, ports, service, region, results) {
     return;
 }
 
+function getEncryptionLevel(kmsKey, encryptionLevels) {
+    if (kmsKey.Origin) {
+        if (kmsKey.Origin === 'Aliyun_KMS') {
+            if (kmsKey.ProtectionLevel) {
+                if (kmsKey.ProtectionLevel.toUpperCase() == 'SOFTWARE') return encryptionLevels.indexOf('alibabacmk');
+                if (kmsKey.ProtectionLevel.toUpperCase() == 'HSM') return encryptionLevels.indexOf('cloudhsm');
+            }
+        }
+        if (kmsKey.Origin === 'EXTERNAL') return encryptionLevels.indexOf('externalcmk');
+    }
+
+    return encryptionLevels.indexOf('none');
+}
+
 module.exports = {
     defaultRegion: defaultRegion,
     createArn: createArn,
-    findOpenPorts: findOpenPorts
+    findOpenPorts: findOpenPorts,
+    getEncryptionLevel: getEncryptionLevel
 };
