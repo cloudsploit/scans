@@ -244,6 +244,7 @@ function userGlobalAccess(statement, restrictedPermissions) {
 }
 
 function crossAccountPrincipal(principal, accountId, fetchPrincipals) {
+
     if (typeof principal === 'string' &&
         /^[0-9]{12}$/.test(principal) &&
         principal !== accountId) {
@@ -361,11 +362,12 @@ function isValidCondition(statement, allowedConditionKeys, iamConditionOperators
 
             var subCondition = statement.Condition[operator];
             for (var key of Object.keys(subCondition)) {
-                if (!allowedConditionKeys.some(conditionKey=> key.includes(conditionKey))) return false;
+                let keyLower = key.toLowerCase();
+                if (!allowedConditionKeys.some(conditionKey => keyLower.includes(conditionKey.toLowerCase()))) return false;
                 var value = subCondition[key];
                 if (iamConditionOperators.string[effect].includes(defaultOperator) ||
                 iamConditionOperators.arn[effect].includes(defaultOperator)) {
-                    if (key === 'kms:CallerAccount' && typeof value === 'string' && effect === 'Allow' &&  value === accountId) {
+                    if (keyLower === 'kms:calleraccount' && typeof value === 'string' && effect === 'Allow' &&  value === accountId) {
                         values.push(value);
                         return values;
                     } 
@@ -817,6 +819,17 @@ function getDefaultKeyId(cache, region, defaultKeyDesc) {
 
     return false;
 }
+
+function getOrganizationAccounts(listAccounts, accountId) {
+    let orgAccountIds = [];
+    if (listAccounts.data && listAccounts.data.length){
+        listAccounts.data.forEach(account => {
+            if (account.Id && account.Id !== accountId) orgAccountIds.push(account.Id);
+        });      
+    }
+    return orgAccountIds;
+}
+
 module.exports = {
     addResult: addResult,
     findOpenPorts: findOpenPorts,
@@ -841,5 +854,6 @@ module.exports = {
     getDenyActionResourceMap: getDenyActionResourceMap,
     getDenyPermissionsMap: getDenyPermissionsMap,
     isEffectivePolicyStatement: isEffectivePolicyStatement,
-    getS3BucketLocation: getS3BucketLocation
+    getS3BucketLocation: getS3BucketLocation,
+    getOrganizationAccounts: getOrganizationAccounts
 };

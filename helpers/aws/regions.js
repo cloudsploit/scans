@@ -64,6 +64,7 @@ module.exports = {
         'ap-southeast-1', 'ap-northeast-1', 'ap-southeast-2', 'ap-south-1'],
     elb: regions,
     elbv2: regions,
+    eventbridge: regions,
     emr: regions,
     es: regions,
     glue: regions,
