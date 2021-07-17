@@ -524,6 +524,7 @@ module.exports = {
         'http20Enabled'                 : require(__dirname + '/plugins/azure/appservice/http20Enabled.js'),
         'httpsOnlyEnabled'              : require(__dirname + '/plugins/azure/appservice/httpsOnlyEnabled.js'),
         'tlsVersionCheck'               : require(__dirname + '/plugins/azure/appservice/tlsVersionCheck.js'),
+        'appBackupRetentionPeriod'      : require(__dirname + '/plugins/azure/appservice/appBackupRetentionPeriod.js'),
         'remoteDebuggingDisabled'       : require(__dirname + '/plugins/azure/appservice/remoteDebuggingDisabled.js'),
         'alwaysOnEnabled'               : require(__dirname + '/plugins/azure/appservice/alwaysOnEnabled.js'),
         'certificateExpiry'             : require(__dirname + '/plugins/azure/appservice/certificateExpiry.js'),

@@ -381,6 +381,12 @@ var postcalls = {
             reliesOnPath: 'webApps.list',
             properties: ['id'],
             url: 'https://management.azure.com/{id}/config?api-version=2019-08-01'
+        },
+        listBackupConfig: {
+            reliesOnPath: 'webApps.list',
+            properties: ['id'],
+            url: 'https://management.azure.com/{id}/config/backup/list?api-version=2019-08-01',
+            post: true
         }
     },
     endpoints: {

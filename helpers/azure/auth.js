@@ -139,11 +139,11 @@ module.exports = {
                         return callback(body.message);
                     }
 
-                    console.log(`[ERROR] Unhandled error from Azure API: Body: ${JSON.stringify(body)}`);
+                    // console.log(`[ERROR] Unhandled error from Azure API: Body: ${JSON.stringify(body)}`);
                 }
 
-                console.log(`[ERROR] Unhandled error from Azure API: Error: ${error}`);
-                return callback('Unknown error occurred while calling the Azure API');
+                // console.log(`[ERROR] Unhandled error from Azure API: Error: ${error}`);
+                return callback(`Unknown error occurred while calling the Azure API: ERROR (${JSON.stringify(body.Message)})`);
             }
         });
     },
