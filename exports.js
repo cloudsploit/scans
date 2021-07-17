@@ -84,6 +84,7 @@ module.exports = {
         'instanceLimit'                 : require(__dirname + '/plugins/aws/ec2/instanceLimit.js'),
         'instanceVcpusLimit'            : require(__dirname + '/plugins/aws/ec2/instanceVcpusLimit.js'),
         'instanceMaxCount'              : require(__dirname + '/plugins/aws/ec2/instanceMaxCount.js'),
+        'instanceApprovedTypes'         : require(__dirname + '/plugins/aws/ec2/instanceApprovedTypes.js'),
         'instanceKeyBasedLogin'         : require(__dirname + '/plugins/aws/ec2/instanceKeyBasedLogin.js'),
         'openAllPortsProtocols'         : require(__dirname + '/plugins/aws/ec2/openAllPortsProtocols.js'),
         'openCIFS'                      : require(__dirname + '/plugins/aws/ec2/openCIFS.js'),
