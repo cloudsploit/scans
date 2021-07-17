@@ -216,6 +216,8 @@ var calls = {
     }
 };
 
+let dateNow = new Date().toISOString();
+let datePast = new Date(new Date().setDate(new Date().getDate()-90)).toISOString();
 var postcalls = {
     advancedThreatProtection: {
         get: {
@@ -334,6 +336,13 @@ var postcalls = {
             reliesOnPath: 'storageAccounts.list',
             properties: ['id'],
             url: 'https://management.azure.com/{id}/blobServices/default/containers?api-version=2019-06-01'
+        }
+    },
+    activityLogs: {
+        list: {
+            reliesOnPath: 'storageAccounts.list',
+            properties: ['id'],
+            url: 'https://management.azure.com/subscriptions/{subscriptionId}/providers/microsoft.insights/eventtypes/management/values?$filter=eventTimestamp ge \'' + datePast + '\' and eventTimestamp le \'' + dateNow + '\' and resourceUri eq \'{id}\'&$select=authorization&api-version=2015-04-01'
         }
     },
     blobServices: {
