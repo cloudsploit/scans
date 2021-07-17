@@ -8,7 +8,7 @@ module.exports = {
     more_info: 'Azure limits availability sets to certain numbers of resources. Exceeding those limits could prevent resources from launching.',
     link: 'https://docs.microsoft.com/en-us/azure/virtual-machines/windows/overview',
     recommended_action: 'Contact Azure support to increase the number of instances available',
-    apis: ['resourceGroups:list', 'availabilitySets:listBySubscription'],
+    apis: ['resourceGroups:list', 'availabilitySets:listByResourceGroup'],
     settings: {
         instance_limit_percentage_fail: {
             name: 'Instance Limit Percentage Fail',
@@ -36,49 +36,66 @@ module.exports = {
         var source = {};
         var locations = helpers.locations(settings.govcloud);
 
-        async.each(locations.availabilitySets, function(location, rcb){
+        async.each(locations.resourceGroups, function(location, rcb){
+            var resourceGroups = helpers.addSource(cache, source, 
+                ['resourceGroups', 'list', location]);
 
-            var availabilitySets = helpers.addSource(cache, source, 
-                ['availabilitySets', 'listBySubscription', location]);
+            if (!resourceGroups) return rcb();
 
-            if (!availabilitySets) return rcb();
-
-            if (availabilitySets.err || !availabilitySets.data) {
+            if (resourceGroups.err || !resourceGroups.data) {
                 helpers.addResult(results, 3, 
-                    'Unable to query Availability Sets: ' + helpers.addError(availabilitySets), location);
+                    'Unable to query Resource Groups: ' + helpers.addError(resourceGroups), location);
                 return rcb();
             }
 
-            if (!availabilitySets.data.length) {
-                helpers.addResult(results, 0, 'No existing Availability Sets', location);
+            if (!resourceGroups.data.length) {
+                helpers.addResult(results, 0, 'No existing Resource Groups', location);
                 return rcb();
             }
 
-            var limits = {
-                'max-instances': 200
-            };
+            async.each(resourceGroups.data, function(resourceGroup, scb){
+                var availabilitySets = helpers.addSource(cache, source, 
+                    ['availabilitySets', 'listByResourceGroup', location, resourceGroup.id]);
 
-            availabilitySets.data.forEach(availabilitySet => {
-                if (availabilitySet.virtualMachines) {
-                    var vmInstances = availabilitySet.virtualMachines.length;
-                } else {
-                    return;
+                if (!availabilitySets || availabilitySets.err || !availabilitySets.data) {
+                    helpers.addResult(results, 3, 
+                        'Unable to query Availability Sets: ' + helpers.addError(availabilitySets), location);
+                    return scb();
                 }
 
-                var percentage = Math.ceil((vmInstances / limits['max-instances']) * 100);
-                var returnMsg = 'Availability Set contains ' + vmInstances + ' of ' +
-                    limits['max-instances'] + ' (' + percentage + '%) available instances';
-
-                if (percentage >= config.instance_limit_percentage_fail) {
-                    helpers.addResult(results, 2, returnMsg, location, availabilitySet.id);
-                } else if (percentage >= config.instance_limit_percentage_warn) {
-                    helpers.addResult(results, 1, returnMsg, location, availabilitySet.id);
-                } else {
-                    helpers.addResult(results, 0, returnMsg, location, availabilitySet.id);
+                if (!availabilitySets.data.length) {
+                    helpers.addResult(results, 0, 'No existing Availability Sets', location);
+                    return scb();
                 }
+
+                var limits = {
+                    'max-instances': 200
+                };
+
+                availabilitySets.data.forEach(availabilitySet => {
+                    if (availabilitySet.virtualMachines) {
+                        var vmInstances = availabilitySet.virtualMachines.length;
+                    } else {
+                        return;
+                    }
+
+                    var percentage = Math.ceil((vmInstances / limits['max-instances']) * 100);
+                    var returnMsg = 'Availability Set contains ' + vmInstances + ' of ' +
+                        limits['max-instances'] + ' (' + percentage + '%) available instances';
+
+                    if (percentage >= config.instance_limit_percentage_fail) {
+                        helpers.addResult(results, 2, returnMsg, location, availabilitySet.id);
+                    } else if (percentage >= config.instance_limit_percentage_warn) {
+                        helpers.addResult(results, 1, returnMsg, location, availabilitySet.id);
+                    } else {
+                        helpers.addResult(results, 0, returnMsg, location, availabilitySet.id);
+                    }
+                });
+
+                scb();
+            }, function(){
+                rcb();
             });
-
-            rcb();
         }, function(){
             callback(null, results, source);
         });

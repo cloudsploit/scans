@@ -217,6 +217,13 @@ var calls = {
 };
 
 var postcalls = {
+    availabilitySets:{
+        listByResourceGroup: {
+            reliesOnPath: 'resourceGroups.list',
+            properties: ['id'],
+            url: 'https://management.azure.com/{id}/providers/Microsoft.Compute/availabilitySets?api-version=2020-12-01'
+        }
+    },
     advancedThreatProtection: {
         get: {
             reliesOnPath: 'databaseAccounts.list',
