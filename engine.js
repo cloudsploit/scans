@@ -137,7 +137,7 @@ var engine = function(cloudConfig, settings) {
     // STEP 2 - Collect API Metadata from Service Providers
     collector(cloudConfig, {
         api_calls: apiCalls,
-        paginate: settings.skip_paginate,
+        paginate: !settings.skip_paginate,
         govcloud: settings.govcloud,
         china: settings.china
     }, function(err, collection) {

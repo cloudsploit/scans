@@ -60,7 +60,7 @@ parser.add_argument('--exit-code', {
 });
 parser.add_argument('--skip-paginate', {
     help: 'AWS only. Skips pagination (for debugging).',
-    action: 'store_false'
+    action: 'store_true'
 });
 parser.add_argument('--suppress', {
     help: 'Suppress results matching the provided Regex. Format: pluginId:region:resourceId',
