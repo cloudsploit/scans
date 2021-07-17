@@ -525,6 +525,7 @@ module.exports = {
         'httpsOnlyEnabled'              : require(__dirname + '/plugins/azure/appservice/httpsOnlyEnabled.js'),
         'tlsVersionCheck'               : require(__dirname + '/plugins/azure/appservice/tlsVersionCheck.js'),
         'remoteDebuggingDisabled'       : require(__dirname + '/plugins/azure/appservice/remoteDebuggingDisabled.js'),
+        'appserviceAutomatedBackups'    : require(__dirname + '/plugins/azure/appservice/appserviceAutomatedBackups.js'),
         'alwaysOnEnabled'               : require(__dirname + '/plugins/azure/appservice/alwaysOnEnabled.js'),
         'certificateExpiry'             : require(__dirname + '/plugins/azure/appservice/certificateExpiry.js'),
 
