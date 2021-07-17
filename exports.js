@@ -283,6 +283,7 @@ module.exports = {
         'notebookDirectInternetAccess'  : require(__dirname + '/plugins/aws/sagemaker/notebookDirectInternetAccess.js'),
 
         'dkimEnabled'                   : require(__dirname + '/plugins/aws/ses/dkimEnabled.js'),
+        'sesValidatedDomains'           : require(__dirname + '/plugins/aws/ses/sesValidatedDomains.js'),
 
         'topicEncrypted'                : require(__dirname + '/plugins/aws/sns/topicEncrypted.js'),
         'topicPolicies'                 : require(__dirname + '/plugins/aws/sns/topicPolicies.js'),

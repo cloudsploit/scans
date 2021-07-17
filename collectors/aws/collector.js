@@ -1264,6 +1264,12 @@ var postcalls = [
                 reliesOnCall: 'listIdentities',
                 override: true,
                 rateLimit: 1000
+            },
+            getIdentityVerificationAttributes: {
+                reliesOnService: 'ses',
+                reliesOnCall: 'listIdentities',
+                override: true,
+                rateLimit: 1000
             }
         },
         SNS: {
