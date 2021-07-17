@@ -25,6 +25,15 @@ const createCache = (BlockPublicAcls, IgnorePublicAcls, BlockPublicPolicy, Restr
                     },
                 },
             },
+            getBucketLocation: {
+                'us-east-1': {
+                    mybucket: {
+                        data: {
+                            LocationConstraint: 'us-east-1'
+                        }
+                    }
+                }
+            }
         },
     };
 };
@@ -48,6 +57,15 @@ const createCacheNoPublicAccessBlock = () => {
                     },
                 },
             },
+            getBucketLocation: {
+                'us-east-1': {
+                    mybucket: {
+                        data: {
+                            LocationConstraint: 'us-east-1'
+                        }
+                    }
+                }
+            }
         },
     };
 };
@@ -137,6 +155,7 @@ describe('bucketPublicAccessBlock', function() {
             bucketPublicAccessBlock.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -172,6 +191,7 @@ describe('bucketPublicAccessBlock', function() {
             bucketPublicAccessBlock.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -181,6 +201,7 @@ describe('bucketPublicAccessBlock', function() {
             bucketPublicAccessBlock.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -190,6 +211,7 @@ describe('bucketPublicAccessBlock', function() {
             bucketPublicAccessBlock.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -201,6 +223,7 @@ describe('bucketPublicAccessBlock', function() {
             }, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });

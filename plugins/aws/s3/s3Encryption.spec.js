@@ -28,6 +28,15 @@ const createCacheNoEncryption = () => {
                     },
                 },
             },
+            getBucketLocation: {
+                'us-east-1': {
+                    mybucket: {
+                        data: {
+                            LocationConstraint: 'us-east-1'
+                        }
+                    }
+                }
+            }
         },
     };
 };
@@ -64,6 +73,15 @@ const createCacheSSE = () => {
                     },
                 },
             },
+            getBucketLocation: {
+                'us-east-1': {
+                    mybucket: {
+                        data: {
+                            LocationConstraint: 'us-east-1'
+                        }
+                    }
+                }
+            }
         },
     };
 };
@@ -100,6 +118,15 @@ const createCacheAWSKMS = () => {
                     },
                 },
             },
+            getBucketLocation: {
+                'us-east-1': {
+                    mybucket: {
+                        data: {
+                            LocationConstraint: 'us-east-1'
+                        }
+                    }
+                }
+            }
         },
         kms: {
             describeKey: {
@@ -150,6 +177,15 @@ const createCacheAWSCMK = () => {
                     },
                 },
             },
+            getBucketLocation: {
+                'us-east-1': {
+                    mybucket: {
+                        data: {
+                            LocationConstraint: 'us-east-1'
+                        }
+                    }
+                }
+            }
         },
         kms: {
             describeKey: {
@@ -200,6 +236,15 @@ const createCacheExternalCMK = () => {
                     },
                 },
             },
+            getBucketLocation: {
+                'us-east-1': {
+                    mybucket: {
+                        data: {
+                            LocationConstraint: 'us-east-1'
+                        }
+                    }
+                }
+            }
         },
         kms: {
             describeKey: {
@@ -250,6 +295,15 @@ const createCacheHSM = () => {
                     },
                 },
             },
+            getBucketLocation: {
+                'us-east-1': {
+                    mybucket: {
+                        data: {
+                            LocationConstraint: 'us-east-1'
+                        }
+                    }
+                }
+            }
         },
         kms: {
             describeKey: {
@@ -295,6 +349,7 @@ describe('s3Encryption', function () {
             s3Encryption.run(cache, { s3_required_encryption_level: 'awskms' }, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -304,6 +359,7 @@ describe('s3Encryption', function () {
             s3Encryption.run(cache, { s3_required_encryption_level: 'sse' }, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -313,6 +369,7 @@ describe('s3Encryption', function () {
             s3Encryption.run(cache, { s3_required_encryption_level: 'awskms' }, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -322,6 +379,7 @@ describe('s3Encryption', function () {
             s3Encryption.run(cache, { s3_required_encryption_level: 'awscmk' }, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -331,6 +389,7 @@ describe('s3Encryption', function () {
             s3Encryption.run(cache, { s3_required_encryption_level: 'externalcmk' }, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -340,6 +399,7 @@ describe('s3Encryption', function () {
             s3Encryption.run(cache, { s3_required_encryption_level: 'cloudhsm' }, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -349,6 +409,7 @@ describe('s3Encryption', function () {
             s3Encryption.run(cache, { s3_required_encryption_level: 'awscmk' }, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });

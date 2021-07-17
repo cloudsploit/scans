@@ -13,6 +13,7 @@ const listBuckets = [
 ];
 
 const createCache = (listBuckets, listBucketsErr) => {
+    var bucketName = (listBuckets && listBuckets.length) ? listBuckets[0].Name : null;
     return {
         s3: {
             listBuckets: {
@@ -21,6 +22,24 @@ const createCache = (listBuckets, listBucketsErr) => {
                     data: listBuckets
                 }
             },
+            getBucketLocation: {
+                'us-east-1': {
+                    [bucketName]: {
+                        data: {
+                            LocationConstraint: 'us-east-1'
+                        }
+                    }
+                }
+            },
+            getBucketPolicy: {
+                'us-east-1': {
+                    [bucketName]: {
+                        err: {
+                            code: 'NoSuchBucketPolicy'
+                        }
+                    }
+                },
+            }
         }
     };
 };
@@ -42,6 +61,7 @@ describe('bucketDnsCompliantName', function () {
             bucketDnsCompliantName.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });

@@ -8,7 +8,7 @@ module.exports = {
     more_info: 'S3 object encryption provides fully-managed encryption of all objects uploaded to an S3 bucket.',
     recommended_action: 'Enable CMK KMS-based encryption for all S3 buckets.',
     link: 'https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-encryption.html',
-    apis: ['S3:listBuckets', 'S3:getBucketEncryption', 'KMS:listKeys', 'KMS:describeKey', 'KMS:listAliases', 'CloudFront:listDistributions'],
+    apis: ['S3:listBuckets', 'S3:getBucketEncryption', 'S3:getBucketLocation', 'KMS:listKeys', 'KMS:describeKey', 'KMS:listAliases', 'CloudFront:listDistributions'],
     remediation_description: 'The impacted bucket will be configured to use either AES-256 encryption, or CMK-based encryption if a KMS key ID is provided.',
     remediation_min_version: '202006020730',
     apis_remediate: ['S3:listBuckets', 'S3:getBucketEncryption', 'S3:getBucketLocation'],
@@ -206,10 +206,12 @@ module.exports = {
                     config.s3_encryption_allow_pattern.length) ? new RegExp(config.s3_encryption_allow_pattern) : false;
 
                 listBuckets.data.forEach(function(bucket){
+                    var bucketLocation = helpers.getS3BucketLocation(cache, region, bucket.Name);
+
                     if (allowRegex && allowRegex.test(bucket.Name)) {
                         helpers.addResult(results, 0,
                             'Bucket: ' + bucket.Name + ' is whitelisted via custom setting.',
-                            'global', 'arn:aws:s3:::' + bucket.Name, custom);
+                            bucketLocation, 'arn:aws:s3:::' + bucket.Name, custom);
                     } else {
                         var getBucketEncryption = helpers.addSource(cache, source,
                             ['s3', 'getBucketEncryption', region, bucket.Name]);
@@ -218,12 +220,12 @@ module.exports = {
                             getBucketEncryption.err.code && getBucketEncryption.err.code == 'ServerSideEncryptionConfigurationNotFoundError') {
                             helpers.addResult(results, 2,
                                 'Bucket: ' + bucket.Name + ' has encryption disabled',
-                                'global', 'arn:aws:s3:::' + bucket.Name);
+                                bucketLocation, 'arn:aws:s3:::' + bucket.Name);
                         } else if (!getBucketEncryption || getBucketEncryption.err || !getBucketEncryption.data) {
                             helpers.addResult(results, 3,
                                 'Error querying bucket encryption for: ' + bucket.Name +
                                 ': ' + helpers.addError(getBucketEncryption),
-                                'global', 'arn:aws:s3:::' + bucket.Name);
+                                bucketLocation, 'arn:aws:s3:::' + bucket.Name);
                         } else if (getBucketEncryption.data.ServerSideEncryptionConfiguration &&
                                 getBucketEncryption.data.ServerSideEncryptionConfiguration.Rules &&
                                 getBucketEncryption.data.ServerSideEncryptionConfiguration.Rules[0] &&
@@ -238,11 +240,11 @@ module.exports = {
                                     cloudfrontOrigins.indexOf(bucket.Name) > -1) {
                                     helpers.addResult(results, 0,
                                         'Bucket: ' + bucket.Name + ' has ' + algo + ' encryption enabled without a CMK but is a CloudFront origin',
-                                        'global', 'arn:aws:s3:::' + bucket.Name, custom);
+                                        bucketLocation, 'arn:aws:s3:::' + bucket.Name, custom);
                                 } else {
                                     helpers.addResult(results, 2,
                                         'Bucket: ' + bucket.Name + ' has ' + algo + ' encryption enabled but is not using a CMK',
-                                        'global', 'arn:aws:s3:::' + bucket.Name, custom);
+                                        bucketLocation, 'arn:aws:s3:::' + bucket.Name, custom);
                                 }
                             } else {
                                 if (config.s3_encryption_kms_alias) {
@@ -250,15 +252,15 @@ module.exports = {
                                         cloudfrontOrigins.indexOf(bucket.Name) > -1) {
                                         helpers.addResult(results, 0,
                                             'Bucket: ' + bucket.Name + ' has ' + algo + ' encryption enabled but is a CloudFront origin',
-                                            'global', 'arn:aws:s3:::' + bucket.Name, custom);
+                                            bucketLocation, 'arn:aws:s3:::' + bucket.Name, custom);
                                     } else if (!aliasKeyIds.length) {
                                         helpers.addResult(results, 2,
                                             'Bucket: ' + bucket.Name + ' has encryption enabled but matching KMS key alias ' + config.s3_encryption_kms_alias + ' could not be found in the account',
-                                            'global', 'arn:aws:s3:::' + bucket.Name, custom);
+                                            bucketLocation, 'arn:aws:s3:::' + bucket.Name, custom);
                                     } else if (algo == 'aws:kms' && aliasKeyIds.indexOf(keyArn) > -1) {
                                         helpers.addResult(results, 0,
                                             'Bucket: ' + bucket.Name + ' has ' + algo + ' encryption enabled using required KMS key: ' + keyArn,
-                                            'global', 'arn:aws:s3:::' + bucket.Name, custom);
+                                            bucketLocation, 'arn:aws:s3:::' + bucket.Name, custom);
                                     } else {
                                         var msg;
                                         if (algo !== 'aws:kms') {
@@ -267,18 +269,18 @@ module.exports = {
                                             msg = 'Bucket: ' + bucket.Name + ' encryption (' + algo + ' with key: ' + keyArn + ') is not configured to use required KMS key';
                                         }
 
-                                        helpers.addResult(results, 2, msg,'global', 'arn:aws:s3:::' + bucket.Name, custom);
+                                        helpers.addResult(results, 2, msg,bucketLocation, 'arn:aws:s3:::' + bucket.Name, custom);
                                     }
                                 } else {
                                     helpers.addResult(results, 0,
                                         'Bucket: ' + bucket.Name + ' has ' + algo + ' encryption enabled',
-                                        'global', 'arn:aws:s3:::' + bucket.Name, custom);
+                                        bucketLocation, 'arn:aws:s3:::' + bucket.Name, custom);
                                 }
                             }
                         } else {
                             helpers.addResult(results, 2,
                                 'Bucket: ' + bucket.Name + ' has encryption disabled',
-                                'global', 'arn:aws:s3:::' + bucket.Name);
+                                bucketLocation, 'arn:aws:s3:::' + bucket.Name);
                         }
                     }
                 });

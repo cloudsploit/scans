@@ -7,7 +7,7 @@ module.exports = {
     more_info: 'S3 bucket names must be DNS-compliant and not contain period "." to enable S3 Transfer Acceleration and to use buckets over SSL.',
     recommended_action: 'Recreate S3 bucket to use "-" instead of "." in S3 bucket names.',
     link: 'https://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html',
-    apis: ['S3:listBuckets'],
+    apis: ['S3:listBuckets', 'S3:getBucketLocation'],
 
     run: function(cache, settings, callback) {
         var results = [];
@@ -33,14 +33,15 @@ module.exports = {
 
         for (var bucket of listBuckets.data) {
             var resource = `arn:aws:s3:::${bucket.Name}`;
+            var bucketLocation = helpers.getS3BucketLocation(cache, region, bucket.Name);
             if (bucket.Name && bucket.Name.indexOf('.') === -1) {
                 helpers.addResult(results, 0,
                     'S3 bucket name is compliant with DNS naming requirements',
-                    region, resource);
+                    bucketLocation, resource);
             } else {
                 helpers.addResult(results, 2,
                     'S3 bucket name is not compliant with DNS naming requirements',
-                    region, resource);
+                    bucketLocation, resource);
             }
         }
 

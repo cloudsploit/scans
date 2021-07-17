@@ -18,6 +18,15 @@ const createCache = (err, data) => {
                         data: data
                     }
                 }
+            },
+            getBucketLocation: {
+                'us-east-1': {
+                    mybucket: {
+                        data: {
+                            LocationConstraint: 'us-east-1'
+                        }
+                    }
+                }
             }
         }
     };
@@ -33,6 +42,7 @@ describe('bucketEnforceEncryption', function () {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
                 expect(results[0].message).to.include('No bucket policy found')
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -43,6 +53,7 @@ describe('bucketEnforceEncryption', function () {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(3);
                 expect(results[0].message).to.include('Error querying for bucket policy')
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -57,6 +68,7 @@ describe('bucketEnforceEncryption', function () {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
                 expect(results[0].message).to.include('Bucket policy does not contain any statements')
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -94,6 +106,7 @@ describe('bucketEnforceEncryption', function () {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
                 expect(results[0].message).to.include('Bucket policy requires encryption on object uploads')
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -131,6 +144,7 @@ describe('bucketEnforceEncryption', function () {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
                 expect(results[0].message).to.include('Bucket policy requires encryption on object uploads')
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -168,6 +182,7 @@ describe('bucketEnforceEncryption', function () {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
                 expect(results[0].message).to.include('Bucket is missing required encryption enforcement policies')
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -207,6 +222,7 @@ describe('bucketEnforceEncryption', function () {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
                 expect(results[0].message).to.include('Bucket policy requires encryption on object uploads but is not enforcing AWS KMS type')
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -246,6 +262,7 @@ describe('bucketEnforceEncryption', function () {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
                 expect(results[0].message).to.include('Bucket policy requires encryption on object uploads')
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -260,6 +277,7 @@ describe('bucketEnforceEncryption', function () {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
                 expect(results[0].message).to.include('is whitelisted via custom setting')
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });

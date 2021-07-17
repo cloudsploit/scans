@@ -161,6 +161,15 @@ const createCache = (listDistributions, listBuckets, getBucketPolicy, policyErr)
                     },
                 },
             },
+            getBucketLocation: {
+                'us-east-1': {
+                    [bucketName]: {
+                        data: {
+                            LocationConstraint: 'us-east-1'
+                        }
+                    }
+                }
+            }
         },
         cloudfront: {
             listDistributions: {
@@ -228,6 +237,7 @@ describe('bucketPolicyCloudFrontOai', function () {
             bucketPolicyCloudFrontOai.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -237,6 +247,7 @@ describe('bucketPolicyCloudFrontOai', function () {
             bucketPolicyCloudFrontOai.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -255,6 +266,7 @@ describe('bucketPolicyCloudFrontOai', function () {
             bucketPolicyCloudFrontOai.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(2);
                 expect(results[0].status).to.equal(2);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -264,6 +276,7 @@ describe('bucketPolicyCloudFrontOai', function () {
             bucketPolicyCloudFrontOai.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(2);
                 expect(results[1].status).to.equal(2);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -273,6 +286,7 @@ describe('bucketPolicyCloudFrontOai', function () {
             bucketPolicyCloudFrontOai.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -282,6 +296,7 @@ describe('bucketPolicyCloudFrontOai', function () {
             bucketPolicyCloudFrontOai.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(3);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });

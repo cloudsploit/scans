@@ -75,6 +75,8 @@ module.exports = {
         }
 
         listBuckets.data.forEach(function(bucket){
+            var bucketLocation = helpers.getS3BucketLocation(cache, region, bucket.Name);
+
             var getBucketVersioning = helpers.addSource(cache, source,
                 ['s3', 'getBucketVersioning', region, bucket.Name]);
 
@@ -82,15 +84,15 @@ module.exports = {
                 helpers.addResult(results, 3,
                     'Error querying bucket versioning for : ' + bucket.Name +
                     ': ' + helpers.addError(getBucketVersioning),
-                    'global', 'arn:aws:s3:::' + bucket.Name);
+                    bucketLocation, 'arn:aws:s3:::' + bucket.Name);
             } else if (getBucketVersioning.data.Status == 'Enabled') {
                 helpers.addResult(results, 0,
                     'Bucket : ' + bucket.Name + ' has versioning enabled',
-                    'global', 'arn:aws:s3:::' + bucket.Name);
+                    bucketLocation, 'arn:aws:s3:::' + bucket.Name);
             } else {
                 helpers.addResult(results, 2,
                     'Bucket : ' + bucket.Name + ' has versioning disabled',
-                    'global', 'arn:aws:s3:::' + bucket.Name);
+                    bucketLocation, 'arn:aws:s3:::' + bucket.Name);
             }
         });
 

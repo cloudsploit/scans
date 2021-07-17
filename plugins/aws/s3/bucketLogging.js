@@ -9,7 +9,7 @@ module.exports = {
                 incident.',
     recommended_action: 'Enable bucket logging for each S3 bucket.',
     link: 'http://docs.aws.amazon.com/AmazonS3/latest/dev/Logging.html',
-    apis: ['S3:listBuckets', 'S3:getBucketLogging'],
+    apis: ['S3:listBuckets', 'S3:getBucketLogging', 'S3:getBucketLocation'],
     compliance: {
         hipaa: 'HIPAA requires strict auditing controls around data access. ' +
                 'S3 logging helps ensure these controls are met by logging ' +
@@ -56,19 +56,21 @@ module.exports = {
             var getBucketLogging = helpers.addSource(cache, source,
                 ['s3', 'getBucketLogging', region, bucket.Name]);
 
+            var bucketLocation = helpers.getS3BucketLocation(cache, region, bucket.Name);
+
             if (!getBucketLogging || getBucketLogging.err || !getBucketLogging.data) {
                 helpers.addResult(results, 3,
                     'Error querying bucket logging for : ' + bucket.Name +
                     ': ' + helpers.addError(getBucketLogging),
-                    'global', 'arn:aws:s3:::' + bucket.Name);
+                    bucketLocation, 'arn:aws:s3:::' + bucket.Name);
             } else if (getBucketLogging.data.LoggingEnabled) {
                 helpers.addResult(results, 0,
                     'Bucket : ' + bucket.Name + ' has logging enabled',
-                    'global', 'arn:aws:s3:::' + bucket.Name);
+                    bucketLocation, 'arn:aws:s3:::' + bucket.Name);
             } else {
                 helpers.addResult(results, 2,
                     'Bucket : ' + bucket.Name + ' has logging disabled',
-                    'global', 'arn:aws:s3:::' + bucket.Name);
+                    bucketLocation, 'arn:aws:s3:::' + bucket.Name);
             }
         });
         callback(null, results, source);

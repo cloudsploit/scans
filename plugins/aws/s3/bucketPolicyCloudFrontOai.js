@@ -9,7 +9,7 @@ module.exports = {
     link: 'https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html',
     recommended_action: 'Review the access policy for S3 bucket which is an origin to a CloudFront distribution. Make sure the S3 bucket is origin to only one distribution. ' +
         'Modify the S3 bucket access policy to allow CloudFront OAI for only the associated CloudFront distribution and restrict access from any other source.',
-    apis: ['CloudFront:listDistributions', 'S3:listBuckets', 'S3:getBucketPolicy'],
+    apis: ['CloudFront:listDistributions', 'S3:listBuckets', 'S3:getBucketPolicy', 'S3:getBucketLocation'],
     compliance: {
         hipaa: 'HIPAA requires that access to protected information is controlled and audited. ' +
                 'If an S3 bucket backing a CloudFront distribution does not require the end ' +
@@ -82,10 +82,12 @@ module.exports = {
         }
 
         async.each(Object.entries(s3BucketAssociations), function([bucketName, cfDistributions], cb){
+            var bucketLocation = helpers.getS3BucketLocation(cache, region, bucketName);
+
             if (Object.keys(cfDistributions).length > 1) {
                 helpers.addResult(results, 2,
                     `S3 bucket is origin to more than one distributions which are these: ${Object.keys(cfDistributions).join(', ')}`,
-                    'global', `arn:aws:s3:::${bucketName}`);
+                    bucketLocation, `arn:aws:s3:::${bucketName}`);
                 return cb();
             }
 
@@ -94,7 +96,7 @@ module.exports = {
                 distributionId = Object.keys(cfDistributions).toString();
                 helpers.addResult(results, 2,
                     `S3 bucket is origin to distribution "${distributionId}" without an origin access identity`,
-                    'global', `arn:aws:s3:::${bucketName}`);
+                    bucketLocation, `arn:aws:s3:::${bucketName}`);
                 return cb();
             }
 
@@ -104,14 +106,14 @@ module.exports = {
                     getBucketPolicy.err.code && getBucketPolicy.err.code === 'NoSuchBucketPolicy') {
                 helpers.addResult(results, 2,
                     `No bucket policy found for S3 bucket: ${bucketName}`,
-                    'global', `arn:aws:s3:::${bucketName}`);
+                    bucketLocation, `arn:aws:s3:::${bucketName}`);
                 return cb();
             }
             
             if (!getBucketPolicy || getBucketPolicy.err || !getBucketPolicy.data || !getBucketPolicy.data.Policy) {
                 helpers.addResult(results, 3,
                     `Error querying for bucket policy for bucket "${bucketName}": ${helpers.addError(getBucketPolicy)}`,
-                    'global', `arn:aws:s3:::${bucketName}`);
+                    bucketLocation, `arn:aws:s3:::${bucketName}`);
                 return cb();
             }
 
@@ -159,16 +161,16 @@ module.exports = {
                 if (unknownPrincipals.length) {
                     helpers.addResult(results, 2,
                         `S3 bucket is origin to distribution "${distributionId}" and allows access to these unknown sources: ${unknownPrincipals.join(', ')}`,
-                        'global', `arn:aws:s3:::${bucketName}`);
+                        bucketLocation, `arn:aws:s3:::${bucketName}`);
                 }
                 if (restrictedOrigins.length) {
                     helpers.addResult(results, 2,
                         `S3 bucket is origin to distribution "${distributionId}" and does not allow access to these CloudFront OAIs: ${restrictedOrigins.join(', ')}`,
-                        'global', `arn:aws:s3:::${bucketName}`);
+                        bucketLocation, `arn:aws:s3:::${bucketName}`);
                 }
             } else {
                 helpers.addResult(results, 0,
-                    `S3 bucket is origin to only one CloudFront distribution which is: ${distributionId}`, 'global', `arn:aws:s3:::${bucketName}`);
+                    `S3 bucket is origin to only one CloudFront distribution which is: ${distributionId}`, bucketLocation, `arn:aws:s3:::${bucketName}`);
             }
 
             cb();

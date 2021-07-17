@@ -32,6 +32,15 @@ const createCache = (bucketErr, website) => {
           "us-east-1": {
             "bucket1": bucketObj
           }
+        },
+        "getBucketLocation": {
+          'us-east-1': {
+              "bucket1": {
+                "data": {
+                  "LocationConstraint": 'us-east-1'
+              }
+            }
+          }
         }
       }
     };
@@ -44,6 +53,7 @@ describe('bucketWebsiteEnabled', function () {
                 expect(results.length).to.equal(1)
                 expect(results[0].status).to.equal(0)
                 expect(results[0].message).to.include('does not have static website hosting enabled')
+                expect(results[0].region).to.equal('us-east-1');
                 done()
             };
 
@@ -57,6 +67,7 @@ describe('bucketWebsiteEnabled', function () {
                 expect(results.length).to.equal(1)
                 expect(results[0].status).to.equal(0)
                 expect(results[0].message).to.include('does not have static website hosting enabled')
+                expect(results[0].region).to.equal('us-east-1');
                 done()
             };
 
@@ -70,6 +81,7 @@ describe('bucketWebsiteEnabled', function () {
                 expect(results.length).to.equal(1)
                 expect(results[0].status).to.equal(2)
                 expect(results[0].message).to.include('has static website hosting enabled')
+                expect(results[0].region).to.equal('us-east-1');
                 done()
             };
 

@@ -10,7 +10,7 @@ module.exports = {
     more_info: 'S3 buckets can be configured to allow anyone, regardless of whether they are an AWS user or not, to write objects to a bucket or delete objects. This option should not be configured unless there is a strong business requirement.',
     recommended_action: 'Disable global all users policies on all S3 buckets and ensure both the bucket ACL is configured with least privileges.',
     link: 'http://docs.aws.amazon.com/AmazonS3/latest/UG/EditingBucketPermissions.html',
-    apis: ['S3:listBuckets', 'S3:getBucketAcl'],
+    apis: ['S3:listBuckets', 'S3:getBucketAcl', 'S3:getBucketLocation'],
     compliance: {
         pci: 'PCI requires that cardholder data can only be accessed by those with ' +
              'a legitimate business need. If PCI-restricted data is stored in S3, ' +
@@ -44,6 +44,7 @@ module.exports = {
             if (!bucket.Name) continue;
 
             var bucketResource = 'arn:aws:s3:::' + bucket.Name;
+            var bucketLocation = helpers.getS3BucketLocation(cache, region, bucket.Name);
 
             var getBucketAcl = helpers.addSource(cache, source,
                 ['s3', 'getBucketAcl', region, bucket.Name]);
@@ -56,7 +57,7 @@ module.exports = {
                 helpers.addResult(results, 3,
                     'Error querying for bucket ACL for bucket: ' + bucket.Name +
                     ': ' + helpers.addError(getBucketAcl),
-                    'global', bucketResource);
+                    bucketLocation, bucketResource);
             } else {
                 for (var g in getBucketAcl.data.Grants) {
                     var grant = getBucketAcl.data.Grants[g];
@@ -89,11 +90,11 @@ module.exports = {
                 if (!bucketIssues.length) {
                     helpers.addResult(results, 0,
                         'Bucket ACL does not contain any insecure allow statements',
-                        'global', bucketResource);
+                        bucketLocation, bucketResource);
                 } else {
                     helpers.addResult(results, bucketResult,
                         bucketIssues.join(' '),
-                        'global', bucketResource);
+                        bucketLocation, bucketResource);
                 }
             }
         }

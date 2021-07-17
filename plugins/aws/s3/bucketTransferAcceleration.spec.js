@@ -35,6 +35,15 @@ const createCache = (listBuckets, getBucketAccelerateConfiguration, listBucketsE
                     }
                 }
             },
+            getBucketLocation: {
+                'us-east-1': {
+                    [bucketName]: {
+                        data: {
+                            LocationConstraint: 'us-east-1'
+                        }
+                    }
+                }
+            }
         }
     };
 };
@@ -56,7 +65,7 @@ describe('bucketTransferAcceleration', function () {
             bucketTransferAcceleration.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(0);
-                expect(results[0].region).to.equal('global');
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -66,7 +75,7 @@ describe('bucketTransferAcceleration', function () {
             bucketTransferAcceleration.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
-                expect(results[0].region).to.equal('global');
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -76,7 +85,7 @@ describe('bucketTransferAcceleration', function () {
             bucketTransferAcceleration.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
-                expect(results[0].region).to.equal('global');
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });
@@ -104,6 +113,7 @@ describe('bucketTransferAcceleration', function () {
             bucketTransferAcceleration.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(3);
+                expect(results[0].region).to.equal('us-east-1');
                 done();
             });
         });

@@ -25,7 +25,7 @@ module.exports = {
     more_info: 'S3 bucket policies can be configured to deny access to the bucket over HTTP.',
     recommended_action: 'Add statements to the bucket policy that deny all S3 actions when SecureTransport is false. Resources must be list of bucket ARN and bucket ARN with wildcard.',
     link: 'https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/',
-    apis: ['S3:listBuckets', 'S3:getBucketPolicy'],
+    apis: ['S3:listBuckets', 'S3:getBucketPolicy', 'S3:getBucketLocation'],
     remediation_description: 'The policy that deny all S3 actions when SecureTransport is false will be added in the impacted buckets.',
     remediation_min_version: '202006020730',
     apis_remediate: ['S3:listBuckets', 'S3:getBucketPolicy'],
@@ -59,14 +59,15 @@ module.exports = {
 
         for (let bucket of listBuckets.data) {
             var bucketResource = `arn:aws:s3:::${bucket.Name}`;
+            var bucketLocation = helpers.getS3BucketLocation(cache, region, bucket.Name);
 
             var getBucketPolicy = helpers.addSource(cache, source, ['s3', 'getBucketPolicy', region, bucket.Name]);
             if (getBucketPolicy && getBucketPolicy.err && getBucketPolicy.err.code && getBucketPolicy.err.code === 'NoSuchBucketPolicy') {
-                helpers.addResult(results, 2, 'No bucket policy found; encryption in transit not enforced', 'global', bucketResource);
+                helpers.addResult(results, 2, 'No bucket policy found; encryption in transit not enforced', bucketLocation, bucketResource);
                 continue;
             }
             if (!getBucketPolicy || getBucketPolicy.err || !getBucketPolicy.data || !getBucketPolicy.data.Policy) {
-                helpers.addResult(results, 3, `Error querying for bucket policy on bucket: ${bucket.Name}: ${helpers.addError(getBucketPolicy)}`, 'global', bucketResource);
+                helpers.addResult(results, 3, `Error querying for bucket policy on bucket: ${bucket.Name}: ${helpers.addError(getBucketPolicy)}`, bucketLocation, bucketResource);
                 continue;
             }
             try {
@@ -78,22 +79,22 @@ module.exports = {
                     policyJson = getBucketPolicy.data.Policy;
                 }
             } catch (e) {
-                helpers.addResult(results, 3, `Bucket policy on bucket ${bucket.Name} could not be parsed.`, 'global', bucketResource);
+                helpers.addResult(results, 3, `Bucket policy on bucket ${bucket.Name} could not be parsed.`, bucketLocation, bucketResource);
                 continue;
             }
             if (!policyJson || !policyJson.Statement) {
-                helpers.addResult(results, 3, `Error querying for bucket policy for bucket: ${bucket.Name}: Policy JSON is invalid or does not contain valid statements.`, 'global', bucketResource);
+                helpers.addResult(results, 3, `Error querying for bucket policy for bucket: ${bucket.Name}: Policy JSON is invalid or does not contain valid statements.`, bucketLocation, bucketResource);
                 continue;
             }
             if (!policyJson.Statement.length) {
-                helpers.addResult(results, 2, 'Bucket policy does not contain any statements; encryption in transit not enforced', 'global', bucketResource);
+                helpers.addResult(results, 2, 'Bucket policy does not contain any statements; encryption in transit not enforced', bucketLocation, bucketResource);
                 continue;
             }
 
             if (policyJson.Statement.find(statement => statementDeniesInsecureTransport(statement, bucketResource))) {
-                helpers.addResult(results, 0, 'Bucket policy enforces encryption in transit', 'global', bucketResource);
+                helpers.addResult(results, 0, 'Bucket policy enforces encryption in transit', bucketLocation, bucketResource);
             } else {
-                helpers.addResult(results, 2, 'Bucket does not enforce encryption in transit', 'global', bucketResource);
+                helpers.addResult(results, 2, 'Bucket does not enforce encryption in transit', bucketLocation, bucketResource);
             }
         }
         callback(null, results, source);

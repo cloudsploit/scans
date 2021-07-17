@@ -7,7 +7,7 @@ module.exports = {
     more_info: 'S3 buckets should have transfer acceleration enabled to increase the speed of data transfers in and out of Amazon S3 using AWS edge network.',
     recommended_action: 'Modify S3 bucket to enable transfer acceleration.',
     link: 'https://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html',
-    apis: ['S3:listBuckets', 'S3:getBucketAccelerateConfiguration'],
+    apis: ['S3:listBuckets', 'S3:getBucketAccelerateConfiguration', 'S3:getBucketLocation'],
 
     run: function(cache, settings, callback) {
         var results = [];
@@ -33,6 +33,7 @@ module.exports = {
 
         listBuckets.data.forEach(function(bucket){
             var resource = `arn:aws:s3:::${bucket.Name}`;
+            var bucketLocation = helpers.getS3BucketLocation(cache, region, bucket.Name);
 
             var getBucketAccelerateConfiguration = helpers.addSource(cache, source,
                 ['s3', 'getBucketAccelerateConfiguration', region, bucket.Name]);
@@ -40,18 +41,18 @@ module.exports = {
             if (!getBucketAccelerateConfiguration || getBucketAccelerateConfiguration.err || !getBucketAccelerateConfiguration.data) {
                 helpers.addResult(results, 3,
                     `Unable to get bucket acceleration configuration: ${helpers.addError(getBucketAccelerateConfiguration)}`,
-                    'global', resource);
+                    bucketLocation, resource);
                 return;
             }
 
             if (getBucketAccelerateConfiguration.data.Status && getBucketAccelerateConfiguration.data.Status.toUpperCase() === 'ENABLED') {
                 helpers.addResult(results, 0,
                     `S3 bucket ${bucket.Name} has transfer acceleration enabled`,
-                    'global', resource);
+                    bucketLocation, resource);
             } else {
                 helpers.addResult(results, 2,
                     `S3 bucket ${bucket.Name} does not have transfer acceleration enabled`,
-                    'global', resource);
+                    bucketLocation, resource);
             }
         });
 
