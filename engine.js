@@ -1,7 +1,14 @@
 var async = require('async');
+var os = require('os');
 var exports = require('./exports.js');
+var opaExports = require('./opa_exports');
 var suppress = require('./postprocess/suppress.js');
 var output = require('./postprocess/output.js');
+var opaHelper = require('./helpers/opa/opaInstaller');
+var opaPolicyEval = require('./helpers/opa/opaPolicyExecutor');
+var fs = require('fs');
+
+var collectionFile = './collection.json';
 var azureHelper = require('./helpers/azure/auth.js');
 
 function runAuth(settings, remediateConfig, callback) {
@@ -13,7 +20,7 @@ function runAuth(settings, remediateConfig, callback) {
         });
     } else callback();
 }
-/**
+ /**
  * The main function to execute CloudSploit scans.
  * @param cloudConfig The configuration for the cloud provider.
  * @param settings General purpose settings.
@@ -29,11 +36,28 @@ var engine = function(cloudConfig, settings) {
     var collector = require(`./collectors/${settings.cloud}/collector.js`);
     var plugins = exports[settings.cloud];
     var apiCalls = [];
+    if (settings.opa) {
+        plugins = opaExports[settings.cloud];
+        var osType = os.type();
+        var opaPath;
+        if ( osType === 'Windows_NT') {
+            opaPath = 'opa.exe';
+        }
+        else {
+            opaPath = 'opa';
+        }
+    }
 
     // Load resource mappings
     var resourceMap;
     try {
         resourceMap = require(`./helpers/${settings.cloud}/resources.js`);
+        // var fsData = fs.readFileSync('./plugins/aws/sqs/sqsEncrypted2.rego', 'utf8');
+        // var meta = fsData.toString().split('#-');
+        // meta = meta[0].split(':=');
+        // var meta1 = meta[1];
+        // var metaData = JSON.parse(meta1.toString());
+
     } catch (e) {
         resourceMap = {};
     }
@@ -55,11 +79,18 @@ var engine = function(cloudConfig, settings) {
     console.log('INFO: Determining API calls to make...');
 
     var skippedPlugins = [];
-
+    var opaPlugins = {};
     Object.entries(plugins).forEach(function(p){
         var pluginId = p[0];
         var plugin = p[1];
-
+        if (settings.opa) {
+            // creating new plugins list to loop over later with the metadata
+            var pluginFileData = fs.readFileSync(plugin, 'utf8');
+            opaPlugins[pluginId] = opaHelper.getMetaData(pluginFileData);
+            opaPlugins[pluginId].path = plugin;
+            // we need to have the metadata here also to get the plugin.apis
+            plugin = opaPlugins[pluginId];
+        }
         // Skip plugins that don't match the ID flag
         var skip = false;
         if (settings.plugin && settings.plugin !== pluginId) {
@@ -148,12 +179,23 @@ var engine = function(cloudConfig, settings) {
         console.log('INFO: Analysis complete. Scan report to follow...');
 
         var maximumStatus = 0;
+
         
         function executePlugins(cloudRemediateConfig) {
-            async.mapValuesLimit(plugins, 10, function(plugin, key, pluginDone) {
+            if (settings.opa) {
+                // check if old collection is present,if so delete it
+                if (fs.existsSync(collectionFile)) {
+                    fs.unlinkSync(collectionFile);
+                }
+                // write the collection
+                fs.writeFileSync(collectionFile, JSON.stringify(collection, null, 4));
+            }
+            if (settings.opa) plugins = opaPlugins;
+
+            async.mapValuesLimit(plugins, 10, function (plugin, key, pluginDone) {
                 if (skippedPlugins.indexOf(key) > -1) return pluginDone(null, 0);
-    
-                var postRun = function(err, results) {
+
+                var postRun = function (err, results) {
                     if (err) return console.log(`ERROR: ${err}`);
                     if (!results || !results.length) {
                         console.log(`Plugin ${plugin.title} returned no results. There may be a problem with this plugin.`);
@@ -164,10 +206,10 @@ var engine = function(cloudConfig, settings) {
                             if (suppressionFilter([key, results[r].region || 'any', results[r].resource || 'any'].join(':'))) {
                                 continue;
                             }
-    
+
                             var complianceMsg = [];
                             if (settings.compliance && settings.compliance.length) {
-                                settings.compliance.forEach(function(c) {
+                                settings.compliance.forEach(function (c) {
                                     if (plugin.compliance && plugin.compliance[c]) {
                                         complianceMsg.push(`${c.toUpperCase()}: ${plugin.compliance[c]}`);
                                     }
@@ -175,10 +217,10 @@ var engine = function(cloudConfig, settings) {
                             }
                             complianceMsg = complianceMsg.join('; ');
                             if (!complianceMsg.length) complianceMsg = null;
-    
+
                             // Write out the result (to console or elsewhere)
                             outputHandler.writeResult(results[r], plugin, key, complianceMsg);
-    
+
                             // Add this to our tracking for the worst status to calculate
                             // the exit code
                             maximumStatus = Math.max(maximumStatus, results[r].status);
@@ -199,11 +241,13 @@ var engine = function(cloudConfig, settings) {
                                 }
                             }
                         }
-    
+
                     }
-                    setTimeout(function() { pluginDone(err, maximumStatus); }, 0);
+                    setTimeout(function () {
+                        pluginDone(err, maximumStatus);
+                    }, 0);
                 };
-    
+
                 if (plugin.asl) {
                     console.log(`INFO: Using custom ASL for plugin: ${plugin.title}`);
                     // Inject APIs and resource maps
@@ -213,16 +257,39 @@ var engine = function(cloudConfig, settings) {
                     let aslRunner;
                     try {
                         aslRunner = require(`./helpers/asl/asl-${aslVersion}.js`);
-    
+
                     } catch (e) {
                         postRun('Error: ASL: Wrong ASL Version: ', e);
                     }
-    
+
                     aslRunner(collection, plugin.asl, resourceMap, postRun);
+                } else if (settings.opa) {
+                    opaHelper.downloadOPAforOs((err) => {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        //opaPolicyEval.opaEval(plugin.path, collectionFile, opaPath, plugin, resourceMap, postRun
+                        opaPolicyEval.opaRunner(collection, opaPath, plugin, resourceMap, postRun);
+                        // (err, results) => {
+                        //     if (err) {
+                        //         return console.log(err);
+                        //     }
+                        //     // Write out the result (to console or elsewhere)
+                        //     var complianceMsg = [];
+                        //     for (var r in results) {
+                        //         outputHandler.writeResult(results[r], plugin, key, complianceMsg);
+                        //         maximumStatus = Math.max(maximumStatus, results[r].status);
+                        //     }
+                        //     setTimeout(function () {
+                        //         pluginDone(err, maximumStatus);
+                        //     }, 0);
+                        // }
+                        //);
+                    });
                 } else {
                     plugin.run(collection, settings, postRun);
                 }
-            }, function(err) {
+            }, function (err) {
                 if (err) return console.log(err);
                 // console.log(JSON.stringify(collection, null, 2));
                 outputHandler.close();
@@ -232,12 +299,16 @@ var engine = function(cloudConfig, settings) {
                     console.log(`INFO: Exiting with exit code: ${maximumStatus}`);
                     process.exitCode = maximumStatus;
                 }
+                // check if  collection is present,if so delete it
+                if (fs.existsSync(collectionFile)) {
+                    fs.unlinkSync(collectionFile);
+                }
                 console.log('INFO: Scan complete');
             });
         }
-        
+
         if (settings.remediate && settings.remediate.length && cloudConfig.remediate) {
-            runAuth(settings, cloudConfig.remediate, function(err) {
+            runAuth(settings, cloudConfig.remediate, function (err) {
                 if (err) return console.log(err);
                 executePlugins(cloudConfig.remediate);
             });

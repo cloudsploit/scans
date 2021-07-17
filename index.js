@@ -70,6 +70,11 @@ parser.add_argument('--remediate', {
     help: 'Run remediation the provided plugin',
     action: 'append'
 });
+parser.add_argument('--opa', {
+    help: 'AWS only. with OPA rego validation.',
+    action: 'store_true'
+});
+
 parser.add_argument('--cloud', {
     help: 'The name of cloud to run plugins for. If not provided, logic will assume cloud from config.js file based on provided credentials',
     choices: ['aws', 'azure', 'github', 'google', 'oracle','alibaba'],
