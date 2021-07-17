@@ -19,7 +19,7 @@ module.exports = {
         var awsOrGov = helpers.defaultPartition(settings);
         var accountId = helpers.addSource(cache, source, ['sts', 'getCallerIdentity', acctRegion, 'data']);
 
-        async.each(regions.ec2, function(region, rcb){
+        async.each(regions.ec2, function(region, rcb) {
             var describeVpcEndpoints = helpers.addSource(cache, source,
                 ['ec2', 'describeVpcEndpoints', region]);
 
@@ -48,13 +48,15 @@ module.exports = {
                 var statements = helpers.normalizePolicyDocument(endpoint.PolicyDocument);
                 var publicEndpoint = false;
 
-                for (var s in statements) {
-                    var statement = statements[s];
-                    
-                    if (statement.Effect == 'Allow') {
-                        if (helpers.globalPrincipal(statement.Principal)) {
-                            publicEndpoint = true;
-                            break;
+                if (!endpoint.ServiceName.startsWith('com.amazonaws.vpce')) {
+                    for (var s in statements) {
+                        var statement = statements[s];
+
+                        if (statement.Effect == 'Allow') {
+                            if (helpers.globalPrincipal(statement.Principal)) {
+                                publicEndpoint = true;
+                                break;
+                            }
                         }
                     }
                 }
@@ -71,7 +73,7 @@ module.exports = {
             }
 
             rcb();
-        }, function(){
+        }, function() {
             callback(null, results, source);
         });
     }
