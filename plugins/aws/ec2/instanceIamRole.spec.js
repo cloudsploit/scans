@@ -26,6 +26,19 @@ const describeInstances = [
             },
         ],
     },
+    {
+        "Instances": [
+            {
+                "AmiLaunchIndex": 0,
+                "ImageId": "ami-0947d2ba12ee1ff75",
+                "InstanceId": "i-0e5b41e1d67462547",
+                "InstanceType": "t2.micro",
+                "State": {
+                    "Name": "shutting-down"
+                },
+            },
+        ],
+    },
 ];
 
 const createCache = (instances) => {
@@ -81,6 +94,24 @@ describe('instanceIamRole', function () {
             instanceIamRole.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
+                done();
+            });
+        });
+
+        it('should PASS if instance does not use an IAM role, but is shutting-down', function (done) {
+            const cache = createCache([describeInstances[1]]);
+            instanceIamRole.run(cache, {}, (err, results) => {
+                expect(results.length).to.equal(1);
+                expect(results[0].status).to.equal(2);
+                done();
+            });
+        });
+
+        it('should PASS if instance does not use an IAM role, but is shutting-down', function (done) {
+            const cache = createCache([describeInstances[2]]);
+            instanceIamRole.run(cache, {}, (err, results) => {
+                expect(results.length).to.equal(1);
+                expect(results[0].status).to.equal(0);
                 done();
             });
         });

@@ -1,6 +1,11 @@
 var async = require('async');
 var helpers = require('../../../helpers/aws');
 
+// Iam roles are detached from instances during the termination process
+// So if the instance is in that temporary state (before it disappears),
+// We don't want it to be reported as failing.
+const statesWhichLoseIamRole = new Set(['shutting-down', 'terminated']);
+
 module.exports = {
     title: 'Instance IAM Role',
     category: 'EC2',
@@ -53,9 +58,10 @@ module.exports = {
 
                 for (var j in describeInstances.data[i].Instances) {
                     var instance = describeInstances.data[i].Instances[j];
+                    var instanceState = instance.State && instance.State.Name;
+                    var instanceIamProfileArn = instance.IamInstanceProfile && instance.IamInstanceProfile.Arn;
 
-                    if (!instance.IamInstanceProfile ||
-                        !instance.IamInstanceProfile.Arn) {
+                    if (!statesWhichLoseIamRole.has(instanceState) && !instanceIamProfileArn) {
                         found += 1;
                         helpers.addResult(results, 2,
                             'Instance does not use an IAM role', region,
