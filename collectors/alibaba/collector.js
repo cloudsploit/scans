@@ -266,6 +266,11 @@ var postcalls = [
                 reliesOnCall: 'listBuckets',
                 override: true
             },
+            getBucketLifecycle: {
+                reliesOnService: 'oss',
+                reliesOnCall: 'listBuckets',
+                override: true
+            },
             getBucketRequestPayment: {
                 reliesOnService: 'oss',
                 reliesOnCall: 'listBuckets',
