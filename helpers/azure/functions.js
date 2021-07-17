@@ -2,6 +2,19 @@ var shared = require(__dirname + '/../shared.js');
 var auth = require(__dirname + '/auth.js');
 var async = require('async');
 
+const defualyPolicyAssignments = {
+    adaptiveApplicationControlsMonitoringEffect: 'AuditIfNotExists',
+    diskEncryptionMonitoringEffect: 'AuditIfNotExists',
+    endpointProtectionMonitoringEffect: 'AuditIfNotExists',
+    identityRemoveExternalAccountWithWritePermissionsMonitoringEffect: 'AuditIfNotExists',
+    disableIPForwardingMonitoringEffect: 'AuditIfNotExists',
+    jitNetworkAccessMonitoringEffect: 'AuditIfNotExists',
+    nextGenerationFirewallMonitoringEffect: 'AuditIfNotExists',
+    identityDesignateLessThanOwnersMonitoringEffect: 'AuditIfNotExists',
+    systemUpdatesMonitoringEffect: 'AuditIfNotExists',
+    systemConfigurationsMonitoringEffect: 'AuditIfNotExists'
+};
+
 function addResult(results, status, message, region, resource, custom) {
     // Override unknown results for known error messages
     if (status == 3 && message && typeof message == 'string') {
@@ -176,10 +189,13 @@ function checkPolicyAssignment(policyAssignments, param, text, results, location
         return;
     }
 
-    if (policyAssignment.parameters &&
-        policyAssignment.parameters[param] &&
-        policyAssignment.parameters[param].value &&
-        (policyAssignment.parameters[param].value == 'AuditIfNotExists' || policyAssignment.parameters[param].value == 'Audit')) {
+    const policyAssignmentStatus = (policyAssignment.parameters && policyAssignment.parameters[param] && policyAssignment.parameters[param].value) ||
+    defualyPolicyAssignments[param] || '';
+
+    if (!policyAssignmentStatus.length) {
+        addResult(results, 0,
+            text + ' is no supported', location, policyAssignment.id);
+    } else if (policyAssignmentStatus == 'AuditIfNotExists' || policyAssignmentStatus == 'Audit') {
         addResult(results, 0,
             text + ' is enabled', location, policyAssignment.id);
     } else {

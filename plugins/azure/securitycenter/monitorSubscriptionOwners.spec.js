@@ -32,6 +32,18 @@ const policyAssignments = [
                 'value': 'Disabled'
             }
         }
+    },
+    {
+        'id': '/subscriptions/123/providers/Microsoft.Authorization/policyAssignments/SecurityCenterBuiltIn',
+        'displayName': 'ASC Default (subscription: 123)',
+        'type': 'Microsoft.Authorization/policyAssignments',
+        'name': 'SecurityCenterBuiltIn',
+        'location': 'eastus',
+        'parameters': {
+            'testParam': {
+                'value': 'Disabled'
+            }
+        }
     }
 ];
 
@@ -101,6 +113,17 @@ describe('monitorSubscriptionOwners', function() {
                 expect(results.length).to.equal(1);
                 expect(results[0].status).to.equal(2);
                 expect(results[0].message).to.include('Monitor for Total Number of Subscription Owners is disabled');
+                expect(results[0].region).to.equal('eastus');
+                done();
+            });
+        });
+
+        it('should give passing result if external accounts with write permissions monitoring is enabled by default', function (done) {
+            const cache = createCache([policyAssignments[3]]);
+            monitorSubscriptionOwners.run(cache, {}, (err, results) => {
+                expect(results.length).to.equal(1);
+                expect(results[0].status).to.equal(0);
+                expect(results[0].message).to.include('Monitor for Total Number of Subscription Owners is enabled');
                 expect(results[0].region).to.equal('eastus');
                 done();
             });
