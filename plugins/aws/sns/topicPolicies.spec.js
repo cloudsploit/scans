@@ -5,7 +5,8 @@ var topicPolicies = require('./topicPolicies');
 const listTopics = [
     { TopicArn: 'arn:aws:sns:us-east-1:111122223333:test-topic' },
     { TopicArn: 'arn:aws:sns:us-east-1:111122223333:test-topic-2' },
-    { TopicArn: 'arn:aws:sns:us-east-1:111122223333:test-topic-2' }
+    { TopicArn: 'arn:aws:sns:us-east-1:111122223333:test-topic-2' },
+    { TopicArn: 'arn:aws:sns:us-east-1:111122223333:test-topic-3' },
 ];
 
 const getTopicAttributes = [
@@ -57,6 +58,20 @@ const getTopicAttributes = [
             "SubscriptionsPending": "0",
             "KmsMasterKeyId": 'alias/aws/sns',
             "TopicArn": 'arn:aws:sns:us-east-1:111122223333:test-topic',
+            "EffectiveDeliveryPolicy": '{"http":{"defaultHealthyRetryPolicy":{"minDelayTarget":20,"maxDelayTarget":20,"numRetries":3,"numMaxDelayRetries":0,"numNoDelayRetries":0,"numMinDelayRetries":0,"backoffFunction":"linear"},"disableSubscriptionOverrides":false}}',
+            "SubscriptionsConfirmed": "0",
+            "DisplayName": "",
+            "SubscriptionsDeleted": "0"
+        }
+    },
+    {
+        "ResponseMetadata": "{\"RequestId\": '2a205b73-5c0d-55e2-8129-0ca612f4a41c' }",
+        "Attributes": {
+            "Owner": '111122223333',
+            "Policy": '{"Version":"2008-10-17","Id":"__default_policy_ID","Statement":[{"Sid":"__default_statement_ID","Effect":"Allow","Principal":{"AWS":"*"},"Action":["SNS:GetTopicAttributes","SNS:SetTopicAttributes","SNS:AddPermission","SNS:RemovePermission","SNS:DeleteTopic","SNS:Subscribe","SNS:ListSubscriptionsByTopic","SNS:Publish","SNS:Receive"],"Resource":"arn:aws:sns:us-east-1:111122223333:test-topic","Condition":{"StringEquals":{"aws:PrincipalOrgID":"o-27bf0ff7oc"}}}]}',
+            "SubscriptionsPending": "0",
+            "KmsMasterKeyId": 'alias/aws/sns',
+            "TopicArn": 'arn:aws:sns:us-east-1:111122223333:test-topic-3',
             "EffectiveDeliveryPolicy": '{"http":{"defaultHealthyRetryPolicy":{"minDelayTarget":20,"maxDelayTarget":20,"numRetries":3,"numMaxDelayRetries":0,"numNoDelayRetries":0,"numMinDelayRetries":0,"backoffFunction":"linear"},"disableSubscriptionOverrides":false}}',
             "SubscriptionsConfirmed": "0",
             "DisplayName": "",
@@ -153,6 +168,9 @@ describe('topicPolicies', function () {
         });
 
         it('should FAIL if SNS topic policy allows global access', function (done) {
+            setTimeout(function () {
+                console.log ('Timeout!'); // Breakpoint here
+            }, 1000);
             const cache = createCache([listTopics[1]], getTopicAttributes[2]);
             topicPolicies.run(cache, {}, (err, results) => {
                 expect(results.length).to.equal(1);
@@ -160,6 +178,16 @@ describe('topicPolicies', function () {
                 done();
             });
         });
+
+        it('should PASS if SNS topic policy has a PrincipalOrgId condition that does not allow global access', function (done) {
+            const cache = createCache([listTopics[3]], getTopicAttributes[4]);
+            topicPolicies.run(cache, {}, (err, results) => {
+                expect(results.length).to.equal(1);
+                expect(results[0].status).to.equal(0);
+                done();
+            });
+        });
+
 
         it('should PASS if no SNS topics found', function (done) {
             const cache = createCache([]);

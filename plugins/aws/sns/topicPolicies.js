@@ -85,8 +85,9 @@ module.exports = {
                         // Does the condition exist?
                         var conditionExists = (statement.Condition ? true : false);
                         // Is it a string condition (StringEquals)? Is the SourceOwner open to everyone?
-                        var conditionString = ((statement.Condition && statement.Condition.StringEquals &&
+                        var conditionSourceOwner = ((statement.Condition && statement.Condition.StringEquals &&
                             (statement.Condition.StringEquals['AWS:SourceOwner'] || !statement.Condition.StringEquals['AWS:SourceOwner'] == '*')) ? true : false);
+
                         // Is it an arn condition (ArnEquals)? Is the SourceArn open to all arns?
                         var conditionArn = false;
                         if (statement.Condition && statement.Condition.ArnEquals &&
@@ -94,8 +95,15 @@ module.exports = {
                             statement.Condition.ArnEquals['aws:SourceArn'] == '*') {
                             conditionArn = true;
                         }
+
+                        // Is it a string condition (StringEquals)? Is the PrincipalOrgID open to everyone?
+                        var conditionalPrincipalOrgId = false;
+                        if (statement.Condition && statement.Condition.StringEquals &&
+                            (statement.Condition.StringEquals['aws:PrincipalOrgID'] || statement.Condition.StringEquals['aws:PrincipalOrgID'] == '*')) {
+                            conditionalPrincipalOrgId = true;
+                        }
                         // Summarize the condition results
-                        var statementEval = ((conditionExists && (conditionString || conditionArn)) ? false : true);
+                        var statementEval = ((conditionExists && (conditionSourceOwner || conditionArn || conditionalPrincipalOrgId )) ? false : true);
 
                         if (effectEval && principalEval && statementEval) {
                             if (statement.Action && typeof statement.Action === 'string') {
