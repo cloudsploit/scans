@@ -86,7 +86,7 @@ module.exports = {
                         var conditionExists = (statement.Condition ? true : false);
                         // Is it a string condition (StringEquals)? Is the SourceOwner open to everyone?
                         var conditionString = ((statement.Condition && statement.Condition.StringEquals &&
-                            (statement.Condition.StringEquals['AWS:SourceOwner'] || !statement.Condition.StringEquals['AWS:SourceOwner'] == '*')) ? true : false);
+                            (statement.Condition.StringEquals['aws:SourceOwner'] || !statement.Condition.StringEquals['aws:SourceOwner'] == '*')) ? true : false);
                         // Is it an arn condition (ArnEquals)? Is the SourceArn open to all arns?
                         var conditionArn = false;
                         if (statement.Condition && statement.Condition.ArnEquals &&
